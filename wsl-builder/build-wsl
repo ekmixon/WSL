@@ -64,9 +64,11 @@ def wslID_to_releases(lpconn):
         if serie.status == "Active Development":
             r["UbuntuPreview"] = serie.name
 
-        is_lts = ((int(serie.version.split('.')[0]) % 2 == 0) and serie.version.endswith('.04'))
-        if is_lts:
-            r["Ubuntu%sLTS" % serie.version] = serie.name
+        if is_lts := (
+            (int(serie.version.split('.')[0]) % 2 == 0)
+            and serie.version.endswith('.04')
+        ):
+            r[f"Ubuntu{serie.version}LTS"] = serie.name
             latest_lts = serie.name
 
     r["Ubuntu"] = latest_lts
@@ -75,7 +77,7 @@ def wslID_to_releases(lpconn):
 
 def rootfs_build(lpconn, release_name, packages_ppas, livecd_rootfs_ppa):
     """Request a launchpad rootfs build and create any livefs if not already present"""
-    release = lpconn.load("/ubuntu/%s" % release_name)
+    release = lpconn.load(f"/ubuntu/{release_name}")
     owner = lpconn.people["ubuntu-wsl-dev"]
 
     # Get or create livefs
@@ -92,12 +94,15 @@ def rootfs_build(lpconn, release_name, packages_ppas, livecd_rootfs_ppa):
     archive = lpconn.load("ubuntu/+archive/primary")
     if livecd_rootfs_ppa:
         livecd_rootfs_ppa_team, livecd_rootfs_ppa_name = livecd_rootfs_ppa.split("/")
-        archive = lpconn.load("~%s/+archive/%s" % (livecd_rootfs_ppa_team, livecd_rootfs_ppa_name))
+        archive = lpconn.load(
+            f"~{livecd_rootfs_ppa_team}/+archive/{livecd_rootfs_ppa_name}"
+        )
+
 
     builds = []
     for arch in SUPPORTED_ARCHES:
         logging.debug("Building on %s", arch)
-        distro_arch_series = lpconn.load("/ubuntu/%s/%s" % (release_name, arch))
+        distro_arch_series = lpconn.load(f"/ubuntu/{release_name}/{arch}")
         builds.append(livefs.requestBuild(archive=archive, distro_arch_series=distro_arch_series,
                                pocket="Updates", metadata_override={"extra_ppas": packages_ppas}))
 

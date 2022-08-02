@@ -59,7 +59,7 @@ def releases(lpconn, all, active, supported, devel, lts):
         milestone_id = "0"
         milestone_date = ""
         lts = ((int(serie.version.split('.')[0]) % 2 == 0) and serie.version.endswith('.04'))
-        description = "%s %s" % (DISTRIBUTION, serie.version)
+        description = f"{DISTRIBUTION} {serie.version}"
         next_milestone = ""
         if lts:
             for milestone in serie.all_milestones:
@@ -70,7 +70,7 @@ def releases(lpconn, all, active, supported, devel, lts):
                     next_milestone = milestone.date_targeted.strftime("%Y-%m-%d")
                     continue
                 milestone_id = m.split('.')[2]
-                description += ".%s" % milestone_id
+                description += f".{milestone_id}"
                 milestone_date = milestone.date_targeted.strftime("%Y-%m-%d")
                 break
 
@@ -81,11 +81,8 @@ def releases(lpconn, all, active, supported, devel, lts):
                 continue
             if supported and not serie.supported:
                 continue
-            if devel and not (serie.active and not serie.supported):
+            if devel and (not serie.active or serie.supported):
                 continue
-
-        if lts and not lts:
-            continue
 
         yield (
             serie.version,
